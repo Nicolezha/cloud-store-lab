@@ -138,21 +138,22 @@ async def upload_product_image(product_id: int, file: UploadFile = File(...)):
 @app.post("/products/{product_id}/comments")
 def add_product_comment(product_id: int, payload: CommentCreate):
     # Validar que el producto exista
-    product_ref = db.collection("products").document(str(product_id))
-    product = product_ref.get()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM products WHERE id = %s", (product_id,))
+    product = cur.fetchone()
+    cur.close()
+    conn.close()
 
-    if not product.exists:
-        raise HTTPException(
-            status_code=404,
-            detail="El producto no existe"
-        )
+    if not product:
+        raise HTTPException(status_code=404, detail="El producto no existe")
         
     # Construir comentario
     comment_doc = {
         "product_id": product_id,
         "author": payload.author,
         "text": payload.text,
-        "timestamp": datetime.now()
+        "timestamp": datetime.utcnow()
     }
 
     # Guardar comentario en Firestore
@@ -162,7 +163,7 @@ def add_product_comment(product_id: int, payload: CommentCreate):
     db.collection(AUDIT_COLLECTION).add({
         "event": "comment_added",
         "product_id": product_id,
-        "timestamp": datetime.now()
+        "timestamp": datetime.utcnow()
     })
 
     return {"message": "Comentario agregado correctamente"}
