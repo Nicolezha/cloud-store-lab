@@ -13,6 +13,8 @@ from google.cloud import firestore # el SDK oficial de Google para hablar con Fi
 from google.cloud import storage   # el SDK oficial de Google para hablar con Cloud Storage desde Python
 from datetime import datetime # para registrar en qué momento exacto ocurrió cada evento
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -32,6 +34,17 @@ db = firestore.Client() # inicializar el cliente de Firestore
 AUDIT_COLLECTION = os.getenv("FIRESTORE_COLLECTION_AUDIT_EVENTS", "audit_events")
 
 app = FastAPI(title="Cloud Computing Evaluation API (Starter)")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/", include_in_schema=False)
+def serve_frontend():
+    return FileResponse("index.html")
 
 class ProductCreate(BaseModel):
     name: str
@@ -93,30 +106,37 @@ async def upload_product_image(product_id: int, file: UploadFile = File(...)):
     # Save metadata or URL reference in Cloud SQL as needed.
     # Students should implement secure bucket access and object naming.
     client = storage.Client()
-
-    bucket = client.bucket(
-        os.getenv("GCS_BUCKET_NAME")
-    )
+    bucket = client.bucket(os.getenv("GCS_BUCKET_NAME"))
 
     blob = bucket.blob(
         f"products/{uuid.uuid4()}-{file.filename}"
     )
 
-    blob.upload_from_file(
-        file.file,
-        content_type=file.content_type
-    )
-
+    blob.upload_from_file(file.file, content_type=file.content_type)
     blob.make_public()
 
+    image_url = blob.public_url
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "UPDATE products SET image_url = %s WHERE id = %s",
+        (image_url, product_id)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
     return {
-        "url": blob.public_url
+        "product_id": product_id,
+        "image_url": image_url
     }
 
 
 @app.post("/products/{product_id}/comments")
 def add_product_comment(product_id: int, payload: CommentCreate):
-    
+
     # Armamos el documento que vamos a guardar en Firestore
     comment_doc = {
         "product_id": product_id,
@@ -124,11 +144,11 @@ def add_product_comment(product_id: int, payload: CommentCreate):
         "text": payload.text,
         "timestamp": datetime.now()
     }
-    
+
     # Lo guardamos en la colección "comments"
     # .add() crea un documento nuevo con ID automático
     db.collection("comments").add(comment_doc)
-    
+
     # También registramos en auditoría que se agregó un comentario
     db.collection(AUDIT_COLLECTION).add({
         "event": "comment_added",

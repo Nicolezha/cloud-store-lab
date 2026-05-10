@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cloud Store Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text: #1A1A18;
+    --muted: #6B6B67;
+    --accent: #185FA5;
+    --accent-bg: #E6F1FB;
+    --accent-text: #0C447C;
+    --success: #0F6E56;
+    --success-bg: #E1F5EE;
+    --success-text: #085041;
+    --danger: #A32D2D;
+    --danger-bg: #FCEBEB;
+    --warn-bg: #FAEEDA;
+    --warn-text: #854F0B;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 16px; height: 16px; fill: white; }
+  .health-badge {
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+  .health-badge:hover { opacity: 0.8; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .dot.checking { background: #BA7517; animation: pulse 1s infinite; }
+  .dot.error { background: var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 7px 16px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+  .tab:not(.active):hover { background: var(--bg); color: var(--text); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 1rem; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  label { font-size: 13px; font-weight: 500; color: var(--muted); }
+  input[type="text"], input[type="number"], textarea, select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); background: white; }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #0C447C; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+  .btn-sm { padding: 5px 11px; font-size: 13px; }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(163,45,45,0.2); }
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .product-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .product-img {
+    width: 100%; height: 160px;
+    object-fit: cover;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .product-img img { width: 100%; height: 100%; object-fit: cover; }
+  .product-img.placeholder { border-bottom: 1px solid var(--border); }
+  .product-body { padding: 1rem; }
+  .product-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .product-desc { font-size: 13px; color: var(--muted); margin-bottom: 10px; min-height: 18px; }
+  .product-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .price-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .product-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .product-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .upload-area {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg);
+  }
+  .upload-area:hover, .upload-area.drag { border-color: var(--accent); background: var(--accent-bg); }
+  .upload-area input { display: none; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-text { font-size: 14px; color: var(--muted); }
+  .upload-text strong { color: var(--accent); }
+  .upload-preview {
+    margin-top: 10px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--success-bg);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--success-text);
+  }
+  .upload-preview.visible { display: flex; }
+  .event-list { display: flex; flex-direction: column; gap: 8px; }
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .event-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .event-dot.create { background: var(--accent); }
+  .event-dot.image { background: var(--success); }
+  .event-dot.comment { background: #993556; }
+  .event-text { flex: 1; font-size: 14px; }
+  .event-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .comment-form { display: flex; gap: 8px; margin-top: 12px; }
+  .comment-form input { flex: 1; }
+  .toast-container {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 999;
+  }
+  .toast {
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    animation: slideIn 0.2s ease;
+    display: flex; align-items: center; gap: 8px;
+    max-width: 320px;
+  }
+  .toast.success { background: var(--success-bg); color: var(--success-text); border: 1px solid rgba(15,110,86,0.2); }
+  .toast.error { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(163,45,45,0.2); }
+  .toast.info { background: var(--accent-bg); color: var(--accent-text); border: 1px solid rgba(24,95,165,0.2); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+  .product-select-row {
+    display: flex; gap: 10px; align-items: flex-end; margin-bottom: 1rem;
+  }
+  .product-select-row .form-group { flex: 1; }
+  .meta-row {
+    display: flex; gap: 8px; align-items: center;
+    font-size: 12px; color: var(--muted); margin-top: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .tag {
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 11px; font-weight: 500;
+  }
+  .tag-blue { background: var(--accent-bg); color: var(--accent-text); }
+  .tag-green { background: var(--success-bg); color: var(--success-text); }
+  .tag-amber { background: var(--warn-bg); color: var(--warn-text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 3h2v-2h2v2h2v2h-2v2h-2v-2h-2v-2z"/></svg>
+    </div>
+    Cloud Store Lab
+  </div>
+  <button class="health-badge" onclick="checkHealth()" id="healthBtn">
+    <span class="dot" id="healthDot"></span>
+    <span id="healthText">Verificar estado</span>
+  </button>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('products')">Productos</button>
+    <button class="tab" onclick="switchTab('upload')">Subir imagen</button>
+    <button class="tab" onclick="switchTab('comments')">Comentarios</button>
+    <button class="tab" onclick="switchTab('audit')">Auditoría</button>
+  </div>
+
+  <!-- PRODUCTOS -->
+  <div class="panel active" id="panel-products">
+    <div class="card">
+      <div class="section-title">Crear producto</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="p-name" placeholder="Ej: Laptop Dell" />
+        </div>
+        <div class="form-group" style="max-width:130px">
+          <label>Precio</label>
+          <input type="number" id="p-price" placeholder="0.00" min="0" step="0.01" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Descripción</label>
+        <textarea id="p-desc" placeholder="Descripción opcional..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="createProduct()" id="createBtn">
+        Crear producto
+      </button>
+    </div>
+
+    <div style="margin-top:1.5rem; display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+      <div class="section-title" style="margin:0">Productos registrados</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadProducts()">↻ Actualizar</button>
+    </div>
+    <div id="products-container">
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        Carga los productos para verlos aquí
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBIR IMAGEN -->
+  <div class="panel" id="panel-upload">
+    <div class="card">
+      <div class="section-title">Subir imagen a producto</div>
+      <div class="product-select-row">
+        <div class="form-group">
+          <label>ID del producto</label>
+          <input type="number" id="img-product-id" placeholder="Ej: 1" min="1" />
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadProductsForSelect()" style="margin-bottom:1px">Ver IDs</button>
+      </div>
+
+      <label style="font-size:13px;font-weight:500;color:var(--muted);display:block;margin-bottom:6px">Imagen</label>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()"
+        ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" />
+        <div class="upload-icon">🖼️</div>
+        <div class="upload-text"><strong>Clic para seleccionar</strong> o arrastra una imagen</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">PNG, JPG, WEBP</div>
+      </div>
+      <div class="upload-preview" id="uploadPreview">
+        <span>✓</span>
+        <span id="uploadFileName">archivo.png</span>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top:14px" onclick="uploadImage()" id="uploadBtn">
+        Subir imagen
+      </button>
+    </div>
+
+    <div id="upload-result" style="margin-top:1rem"></div>
+  </div>
+
+  <!-- COMENTARIOS -->
+  <div class="panel" id="panel-comments">
+    <div class="card">
+      <div class="section-title">Agregar comentario</div>
+      <div class="form-row">
+        <div class="form-group" style="max-width:140px">
+          <label>ID del producto</label>
+          <input type="number" id="c-product-id" placeholder="Ej: 1" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Autor</label>
+          <input type="text" id="c-author" placeholder="Tu nombre" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Comentario</label>
+        <textarea id="c-text" placeholder="Escribe tu comentario..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addComment()" id="commentBtn">
+        Guardar en Firestore
+      </button>
+    </div>
+  </div>
+
+  <!-- AUDITORÍA -->
+  <div class="panel" id="panel-audit">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+      <div class="section-title" style="margin:0">Eventos de auditoría</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAudit()">↻ Actualizar</button>
+    </div>
+    <div class="card" id="audit-container">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        Carga los eventos para verlos aquí
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const API = '';
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['products','upload','comments','audit'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'products') loadProducts();
+  if (name === 'audit') loadAudit();
+}
+
+function toast(msg, type='info') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = (type==='success'?'✓':type==='error'?'✕':'ℹ') + ' ' + msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+async function checkHealth() {
+  const dot = document.getElementById('healthDot');
+  const txt = document.getElementById('healthText');
+  dot.className = 'dot checking';
+  txt.textContent = 'Verificando...';
+  try {
+    const r = await fetch(API + '/health');
+    const d = await r.json();
+    dot.className = 'dot';
+    txt.textContent = d.status || 'ok';
+    toast('Servicio en línea', 'success');
+  } catch(e) {
+    dot.className = 'dot error';
+    txt.textContent = 'Sin conexión';
+    toast('No se pudo conectar con la API', 'error');
+  }
+}
+
+async function loadProducts() {
+  const c = document.getElementById('products-container');
+  c.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Cargando...</div>';
+  try {
+    const r = await fetch(API + '/products');
+    const products = await r.json();
+    if (!products.length) {
+      c.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div>No hay productos aún. ¡Crea el primero!</div>';
+      return;
+    }
+    c.innerHTML = '<div class="products-grid">' + products.map(renderProduct).join('') + '</div>';
+  } catch(e) {
+    c.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error al cargar productos</div>';
+    toast('Error cargando productos', 'error');
+  }
+}
+
+function renderProduct(p) {
+  const imgHtml = p.image_url
+    ? `<div class="product-img"><img src="${p.image_url}" alt="${p.name}" loading="lazy" /></div>`
+    : `<div class="product-img placeholder" style="height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;border-bottom:1px solid var(--border)"><span style="font-size:28px;opacity:0.3">🖼️</span><span style="font-size:12px;color:var(--muted)">Sin imagen</span></div>`;
+  const date = p.created_at ? new Date(p.created_at).toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'}) : '';
+  return `<div class="product-card">
+    ${imgHtml}
+    <div class="product-body">
+      <div class="product-name">${p.name}</div>
+      <div class="product-desc">${p.description || 'Sin descripción'}</div>
+      <div class="product-footer">
+        <span class="price-badge">$${Number(p.price).toLocaleString('es-CO')}</span>
+        <span class="product-id">ID #${p.id}</span>
+      </div>
+      <div class="meta-row">${date ? '📅 ' + date : ''}</div>
+      <div class="product-actions">
+        <button class="btn btn-ghost btn-sm" onclick="setUploadId(${p.id})">📎 Imagen</button>
+        <button class="btn btn-ghost btn-sm" onclick="setCommentId(${p.id})">💬 Comentar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function setUploadId(id) {
+  document.getElementById('img-product-id').value = id;
+  switchTab('upload');
+}
+
+function setCommentId(id) {
+  document.getElementById('c-product-id').value = id;
+  switchTab('comments');
+}
+
+async function createProduct() {
+  const name = document.getElementById('p-name').value.trim();
+  const price = parseFloat(document.getElementById('p-price').value);
+  const desc = document.getElementById('p-desc').value.trim();
+  if (!name) { toast('El nombre es obligatorio', 'error'); return; }
+  if (isNaN(price)) { toast('El precio es obligatorio', 'error'); return; }
+  const btn = document.getElementById('createBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creando...';
+  try {
+    const r = await fetch(API + '/products', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, price, description: desc || null})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Error');
+    toast(`Producto creado con ID #${d.id}`, 'success');
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-price').value = '';
+    document.getElementById('p-desc').value = '';
+    loadProducts();
+  } catch(e) {
+    toast('Error al crear el producto: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Crear producto';
+  }
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.add('drag');
+}
+function handleDragLeave() { document.getElementById('uploadArea').classList.remove('drag'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) previewFile(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) previewFile(file);
+}
+function previewFile(file) {
+  const preview = document.getElementById('uploadPreview');
+  document.getElementById('uploadFileName').textContent = file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+  preview.classList.add('visible');
+}
+
+async function uploadImage() {
+  const productId = document.getElementById('img-product-id').value;
+  const fileInput = document.getElementById('fileInput');
+  if (!productId) { toast('Ingresa el ID del producto', 'error'); return; }
+  if (!fileInput.files[0]) { toast('Selecciona una imagen primero', 'error'); return; }
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Subiendo...';
+  try {
+    const form = new FormData();
+    form.append('file', fileInput.files[0]);
+    const r = await fetch(API + `/products/${productId}/image`, { method: 'POST', body: form });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Error');
+    toast('Imagen subida a Cloud Storage ✓', 'success');
+    const result = document.getElementById('upload-result');
+    result.innerHTML = `<div class="card" style="border-color:rgba(15,110,86,0.3);background:var(--success-bg)">
+      <div style="font-size:13px;font-weight:500;color:var(--success-text);margin-bottom:6px">Imagen almacenada</div>
+      <a href="${d.image_url || d.url || '#'}" target="_blank" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);word-break:break-all">${d.image_url || d.url || JSON.stringify(d)}</a>
+    </div>`;
+    fileInput.value = '';
+    document.getElementById('uploadPreview').classList.remove('visible');
+  } catch(e) {
+    toast('Error al subir imagen: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Subir imagen';
+  }
+}
+
+async function addComment() {
+  const productId = document.getElementById('c-product-id').value;
+  const author = document.getElementById('c-author').value.trim();
+  const text = document.getElementById('c-text').value.trim();
+  if (!productId) { toast('Ingresa el ID del producto', 'error'); return; }
+  if (!author || !text) { toast('Autor y comentario son obligatorios', 'error'); return; }
+  const btn = document.getElementById('commentBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Guardando...';
+  try {
+    const r = await fetch(API + `/products/${productId}/comments`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({author, text})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Error');
+    toast('Comentario guardado en Firestore ✓', 'success');
+    document.getElementById('c-author').value = '';
+    document.getElementById('c-text').value = '';
+  } catch(e) {
+    toast('Error al guardar: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Guardar en Firestore';
+  }
+}
+
+async function loadAudit() {
+  const c = document.getElementById('audit-container');
+  c.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Cargando eventos...</div>';
+  try {
+    const r = await fetch(API + '/audit/events');
+    const data = await r.json();
+    const events = data.events || [];
+    if (!events.length) {
+      c.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>No hay eventos registrados aún</div>';
+      return;
+    }
+    c.innerHTML = '<div class="event-list">' + events.map(renderEvent).join('') + '</div>';
+  } catch(e) {
+    c.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Error al cargar eventos</div>';
+    toast('Error cargando auditoría', 'error');
+  }
+}
+
+function renderEvent(e) {
+  const type = e.event || e.type || 'event';
+  const dotClass = type.includes('image') ? 'image' : type.includes('comment') ? 'comment' : 'create';
+  const labels = {
+    'product_created': '📦 Producto creado',
+    'image_uploaded': '🖼️ Imagen subida',
+    'comment_added': '💬 Comentario agregado',
+  };
+  const label = labels[type] || type;
+  const ts = e.timestamp ? new Date(e.timestamp._seconds ? e.timestamp._seconds*1000 : e.timestamp).toLocaleString('es-CO') : '';
+  return `<div class="event-item">
+    <span class="event-dot ${dotClass}"></span>
+    <div class="event-text">
+      <strong>${label}</strong>
+      ${e.product_id ? `<span style="font-size:12px;color:var(--muted);margin-left:6px">· Producto #${e.product_id}</span>` : ''}
+      ${e.author ? `<span style="font-size:12px;color:var(--muted);margin-left:6px">· ${e.author}</span>` : ''}
+    </div>
+    <span class="event-time">${ts}</span>
+  </div>`;
+}
+
+async function loadProductsForSelect() {
+  try {
+    const r = await fetch(API + '/products');
+    const products = await r.json();
+    if (!products.length) { toast('No hay productos aún', 'info'); return; }
+    toast('IDs disponibles: ' + products.map(p => `#${p.id} ${p.name}`).join(', '), 'info');
+  } catch(e) {
+    toast('Error al cargar productos', 'error');
+  }
+}
+
+checkHealth();
+loadProducts();
+</script>
+</body>
+</html>
