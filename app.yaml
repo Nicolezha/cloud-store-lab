@@ -6,7 +6,7 @@ runtime: python311
 
 entrypoint: gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app
 beta_settings:
-  cloud_sql_instances:"previo-2-nube:us-central1:previo-nube-bd"
+  cloud_sql_instances: "previo-2-nube:us-central1:previo-nube-bd"
   
 env_variables:
   # TODO: Fill these values for your project setup.
