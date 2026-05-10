@@ -82,6 +82,17 @@ def create_product(payload: ProductCreate):
     conn.commit()
     cur.close()
     conn.close()
+
+     # Auditoría del evento
+    db.collection(AUDIT_COLLECTION).add({
+        "event": "product_added",
+        "product_id": product_id,
+        "name": payload.name,
+        "description": payload.description,
+        "price": payload.price,
+        "timestamp": datetime.utcnow()
+    })
+
     return {"id": product_id, "message": "Producto creado"}
 
 
@@ -129,6 +140,14 @@ async def upload_product_image(product_id: int, file: UploadFile = File(...)):
     cur.close()
     conn.close()
 
+     # Auditoría del evento
+    db.collection(AUDIT_COLLECTION).add({
+        "event": "image_uploaded",
+        "product_id": product_id,
+        "image_url": image_url,
+        "timestamp": datetime.utcnow()
+    })
+
     return {
         "product_id": product_id,
         "image_url": image_url
@@ -163,6 +182,8 @@ def add_product_comment(product_id: int, payload: CommentCreate):
     db.collection(AUDIT_COLLECTION).add({
         "event": "comment_added",
         "product_id": product_id,
+        "author": payload.author,
+        "text": payload.text,
         "timestamp": datetime.utcnow()
     })
 
