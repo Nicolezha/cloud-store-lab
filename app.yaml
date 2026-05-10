@@ -9,7 +9,7 @@ entrypoint: gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app
 env_variables:
   # TODO: Fill these values for your project setup.
   GOOGLE_CLOUD_PROJECT: "previo-2-nube"
-  DB_HOST: "127.0.0.1"
+  DB_HOST: "/cloudsql/previo-2-nube:us-central1:previo-nube-bd"
   DB_NAME: "cloudstore"
   DB_USER: "postgres"
   DB_PASSWORD: "TrioDinamico"
