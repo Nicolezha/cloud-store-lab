@@ -6,12 +6,25 @@ This file is intentionally incomplete. Students must implement:
 - Cloud Storage integration
 - Firestore integration
 """
-
+import os
+import psycopg2
 from fastapi import FastAPI
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+def get_connection():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT", 5432),
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD")
+    )
 
 app = FastAPI(title="Cloud Computing Evaluation API (Starter)")
-
 
 class ProductCreate(BaseModel):
     name: str
@@ -36,14 +49,33 @@ def create_product(payload: ProductCreate):
     # TODO: Validate and store product data in Cloud SQL (PostgreSQL).
     # Do not keep products in memory for the final solution.
     # Students should use psycopg2 and proper SQL schema design.
-    pass
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO products (name, description, price) VALUES (%s, %s, %s) RETURNING id",
+        (payload.name, payload.description, payload.price)
+    )
+    product_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return {"id": product_id, "message": "Producto creado"}
 
 
 @app.get("/products")
 def list_products():
     # TODO: Read and return product records from Cloud SQL (PostgreSQL).
     # Consider pagination and filtering in the final implementation.
-    pass
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description, price, image_url, created_at FROM products")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return [
+        {"id": r[0], "name": r[1], "description": r[2], "price": r[3], "image_url": r[4], "created_at": str(r[5])}
+        for r in rows
+    ]
 
 
 @app.post("/products/{product_id}/image")
