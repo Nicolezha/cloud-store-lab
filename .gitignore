@@ -1,5 +1,12 @@
-.env
+# Virtual environment
 venv/
-_pycache_/
+
+# Python cache
+__pycache__/
+
+# Environment variables
+.env
+
+# Local development
 credentials/
 *.pyc

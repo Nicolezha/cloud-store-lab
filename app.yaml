@@ -8,10 +8,10 @@ entrypoint: gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app
 
 env_variables:
   # TODO: Fill these values for your project setup.
-  GOOGLE_CLOUD_PROJECT: "REPLACE_ME"
-  DB_HOST: "REPLACE_ME"
-  DB_NAME: "REPLACE_ME"
-  DB_USER: "REPLACE_ME"
-  DB_PASSWORD: "REPLACE_ME"
-  GCS_BUCKET_NAME: "REPLACE_ME"
-  FIRESTORE_COLLECTION_AUDIT_EVENTS: "REPLACE_ME"
+  GOOGLE_CLOUD_PROJECT: "previo-2-nube"
+  DB_HOST: "127.0.0.1"
+  DB_NAME: "cloudstore"
+  DB_USER: "postgres"
+  DB_PASSWORD: "TrioDinamico"
+  GCS_BUCKET_NAME: "bucket-previo2-nube"
+  FIRESTORE_COLLECTION_AUDIT_EVENTS: "audit_events"
