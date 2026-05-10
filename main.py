@@ -9,6 +9,10 @@ This file is intentionally incomplete. Students must implement:
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi import UploadFile, File
+from google.cloud import storage
+import uuid
+import os
 
 app = FastAPI(title="Cloud Computing Evaluation API (Starter)")
 
@@ -28,6 +32,8 @@ class CommentCreate(BaseModel):
 def health():
     # TODO: Return service status and optionally dependency status.
     # Keep this endpoint simple for uptime checks.
+    return {"status": "ok",
+            "service": "cloud-store-lab"}
     pass
 
 
@@ -47,11 +53,30 @@ def list_products():
 
 
 @app.post("/products/{product_id}/image")
-def upload_product_image(product_id: int):
+async def upload_product_image(product_id: int, file: UploadFile = File(...)):
     # TODO: Accept an image upload and store it in Cloud Storage.
     # Save metadata or URL reference in Cloud SQL as needed.
     # Students should implement secure bucket access and object naming.
-    pass
+    client = storage.Client()
+
+    bucket = client.bucket(
+        os.getenv("GCS_BUCKET_NAME")
+    )
+
+    blob = bucket.blob(
+        f"products/{uuid.uuid4()}-{file.filename}"
+    )
+
+    blob.upload_from_file(
+        file.file,
+        content_type=file.content_type
+    )
+
+    blob.make_public()
+
+    return {
+        "url": blob.public_url
+    }
 
 
 @app.post("/products/{product_id}/comments")
