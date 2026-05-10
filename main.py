@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from fastapi import HTTPException
 
 
 load_dotenv()
@@ -136,8 +137,17 @@ async def upload_product_image(product_id: int, file: UploadFile = File(...)):
 
 @app.post("/products/{product_id}/comments")
 def add_product_comment(product_id: int, payload: CommentCreate):
+    # Validar que el producto exista
+    product_ref = db.collection("products").document(str(product_id))
+    product = product_ref.get()
 
-    # Armamos el documento que vamos a guardar en Firestore
+    if not product.exists:
+        raise HTTPException(
+            status_code=404,
+            detail="El producto no existe"
+        )
+        
+    # Construir comentario
     comment_doc = {
         "product_id": product_id,
         "author": payload.author,
@@ -145,19 +155,17 @@ def add_product_comment(product_id: int, payload: CommentCreate):
         "timestamp": datetime.now()
     }
 
-    # Lo guardamos en la colección "comments"
-    # .add() crea un documento nuevo con ID automático
+    # Guardar comentario en Firestore
     db.collection("comments").add(comment_doc)
 
-    # También registramos en auditoría que se agregó un comentario
+    # Auditoría del evento
     db.collection(AUDIT_COLLECTION).add({
         "event": "comment_added",
         "product_id": product_id,
         "timestamp": datetime.now()
     })
-    
-    return {"message": "Comentario agregado correctamente"}
 
+    return {"message": "Comentario agregado correctamente"}
 
 @app.get("/audit/events")
 def get_audit_events():
