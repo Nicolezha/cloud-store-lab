@@ -44,7 +44,7 @@ app.add_middleware(
 
 @app.get("/", include_in_schema=False)
 def serve_frontend():
-    return FileResponse("index.html")
+    return FileResponse("static/index.html")
 
 class ProductCreate(BaseModel):
     name: str
