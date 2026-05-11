@@ -17,3 +17,7 @@ env_variables:
   DB_PASSWORD: "TrioDinamico"
   GCS_BUCKET_NAME: "bucket-previo2-nube"
   FIRESTORE_COLLECTION_AUDIT_EVENTS: "audit_events"
+  
+handlers:
+url: /.*
+  script: auto
